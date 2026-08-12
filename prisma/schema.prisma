@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  password        String
+  role            String   @default("user") // user | admin
+  profilePicture  String   @default("")
+  skills          String[] @default([])
+  bio             String   @default("")
+  githubUsername  String   @default("")
+  githubConnected Boolean  @default(false)
+  banned          Boolean  @default(false)
+  bannedReason    String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  ownedProjects   Project[]       @relation("ProjectOwner")
+  memberships     ProjectMember[]
+  tasksAssigned   Task[]          @relation("TaskAssignee")
+  tasksCreated    Task[]          @relation("TaskCreator")
+  invitesReceived Invite[]        @relation("InviteReceiver")
+  invitesSent     Invite[]        @relation("InviteSender")
+  reportsFiled    Report[]        @relation("ReportFiler")
+  reportsResolved Report[]        @relation("ReportResolver")
+  messages        Message[]
+  notifications   Notification[]
+  filesUploaded   ProjectFile[]
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  name        String
+  description String
+  techStack   String[]  @default([])
+  projectType String    @default("")
+  deadline    DateTime?
+  githubRepo  String    @default("")
+  status      String    @default("active") // active | completed | archived
+  ownerId     String
+  owner       User      @relation("ProjectOwner", fields: [ownerId], references: [id])
+  members     ProjectMember[]
+  tasks       Task[]
+  invites     Invite[]
+  messages    Message[]
+  files       ProjectFile[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model ProjectMember {
+  id        String  @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String  @default("developer") // owner | developer | viewer
+  label     String  @default("")
+
+  @@unique([projectId, userId])
+}
+
+model Task {
+  id           String    @id @default(uuid())
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title        String
+  description  String    @default("")
+  assignedToId String?
+  assignedTo   User?     @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  priority     String    @default("medium") // low | medium | high
+  deadline     DateTime?
+  status       String    @default("todo") // todo | in_progress | review | done
+  checklist    Json      @default("[]")
+  createdById  String
+  createdBy    User      @relation("TaskCreator", fields: [createdById], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Invite {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  invitedUserId String
+  invitedUser   User     @relation("InviteReceiver", fields: [invitedUserId], references: [id])
+  invitedById   String
+  invitedBy     User     @relation("InviteSender", fields: [invitedById], references: [id])
+  role          String   @default("developer") // developer | viewer
+  status        String   @default("pending") // pending | accepted | declined
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Report {
+  id             String   @id @default(uuid())
+  reportedById   String
+  reportedBy     User     @relation("ReportFiler", fields: [reportedById], references: [id])
+  targetType     String   // user | project
+  targetId       String
+  reason         String
+  status         String   @default("open") // open | resolved | dismissed
+  resolvedById   String?
+  resolvedBy     User?    @relation("ReportResolver", fields: [resolvedById], references: [id])
+  resolutionNote String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // task_assigned | invite | mention | invite_response
+  title     String
+  body      String   @default("")
+  link      String   @default("") // frontend route to deep-link to, e.g. /dashboard/projects/:id
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+model ProjectFile {
+  id           String   @id @default(uuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  name         String
+  url          String
+  publicId     String   // Cloudinary public_id, needed to delete the asset later
+  size         Int
+  mimeType     String
+  createdAt    DateTime @default(now())
+}
