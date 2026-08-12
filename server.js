@@ -25,6 +25,13 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || "*", credentials: true }));
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.json({
+    message: "Forgely backend is running",
+    status: "ok"
+  });
+});
+
 app.get("/api/health", async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
