@@ -1,4 +1,4 @@
-# forgely — Backend
+# ProjectForge — Backend
 
 Node/Express API. Auth, projects, tasks/Kanban, invites, admin, reports, GitHub activity,
 contribution scoring, real-time chat, notifications, file uploads.
@@ -17,14 +17,36 @@ Express · Socket.IO · Prisma ORM · PostgreSQL (Neon) · JWT auth · bcrypt ·
 5. `npm install` (runs `prisma generate` automatically)
 6. `npx prisma migrate dev --name init` — creates the tables on Neon (or `--name phase2` if
    you're migrating an existing DB that already has the Phase 1 tables)
-7. `npm run seed` — creates `demo@forgely.dev` / `demo1234` and `admin@forgely.dev` / `admin1234`
+7. `npm run seed` — creates `demo@projectforge.dev` / `demo1234` and `admin@projectforge.dev` / `admin1234`
 8. `npm run dev`
 
 ## Deploying
-Works on Railway, Render, Fly.io, or any Node host that supports long-lived WebSocket connections
-(this now runs Socket.IO alongside the REST API on the same HTTP server — make sure your host
-doesn't put the app behind something that kills idle connections aggressively). Set the same env
-vars there, and run `npm run prisma:deploy` (or add it as a build/release step) instead of `migrate dev`.
+**Don't use Vercel for this backend.** Vercel runs Node apps as serverless functions, which don't
+support the persistent server this app needs (`app.listen`) and can't run Socket.IO at all — chat
+and real-time notifications require a long-lived connection that serverless platforms tear down
+between requests. Use Railway, Render, or Fly.io instead — anywhere that runs your app as a normal
+long-running process.
+
+### Render (the `render.yaml` in this repo is ready to use)
+1. Push this backend to its own GitHub repo.
+2. On render.com, New → Blueprint → connect the repo. Render reads `render.yaml` automatically and
+   builds from the included `Dockerfile`.
+3. Fill in the env vars it prompts for (`DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `CLIENT_URL`,
+   and the optional `GITHUB_TOKEN`/`CLOUDINARY_*` vars) in the Render dashboard.
+4. Deploy. Render's free tier supports WebSockets out of the box — chat and notifications will work.
+5. Run migrations once against production: from your local machine, temporarily point
+   `DIRECT_URL` at production in a local `.env` and run `npx prisma migrate deploy`, or add it as
+   Render's pre-deploy command.
+
+### Railway / Fly.io
+Both read the included `Dockerfile` directly — connect the repo (Railway) or run `fly launch`
+(Fly.io), set the same env vars, and deploy. The `Procfile` is there as a fallback for any
+buildpack-based host that doesn't use Docker.
+
+### Frontend
+Vercel is genuinely the right choice for the frontend (it's a static build) — just make sure
+`VITE_API_URL` in the frontend's Vercel project settings points at wherever you deploy *this*
+backend, e.g. `https://your-backend.onrender.com/api`.
 
 ## API surface
 - `/api/auth` — register, login, me

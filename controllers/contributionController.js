@@ -1,11 +1,7 @@
 import prisma from "../config/prisma.js";
 import { userProjectRole } from "../middleware/auth.js";
 import { parseRepoUrl, getRepoActivity, getUserMergedPRCount, getUserReviewCount } from "../services/github.js";
-
-// Weights match the original spec: tasks 40 / commits 25 / PRs 20 / reviews 10 / activity 5
-const WEIGHTS = { tasks: 0.4, commits: 0.25, prs: 0.2, reviews: 0.1, activity: 0.05 };
-
-const normalize = (value, max) => (max > 0 ? Math.round((value / max) * 100) : 0);
+import { WEIGHTS, buildBreakdown, computeScore, maxOf } from "../utils/scoring.js";
 
 export const getProjectContribution = async (req, res, next) => {
   try {
@@ -65,28 +61,18 @@ export const getProjectContribution = async (req, res, next) => {
       })
     );
 
-    const maxTasks = Math.max(0, ...raw.map((r) => r.tasksCompleted));
-    const maxActivity = Math.max(0, ...raw.map((r) => r.activityTouches));
-    const maxCommits = Math.max(0, ...raw.map((r) => r.commits));
-    const maxPrs = Math.max(0, ...raw.map((r) => r.prs));
-    const maxReviews = Math.max(0, ...raw.map((r) => r.reviews));
+    const maxes = {
+      tasks: maxOf(raw.map((r) => r.tasksCompleted)),
+      activity: maxOf(raw.map((r) => r.activityTouches)),
+      commits: maxOf(raw.map((r) => r.commits)),
+      prs: maxOf(raw.map((r) => r.prs)),
+      reviews: maxOf(raw.map((r) => r.reviews)),
+    };
 
     const members = raw
       .map((r) => {
-        const breakdown = {
-          tasks: normalize(r.tasksCompleted, maxTasks),
-          commits: normalize(r.commits, maxCommits),
-          prs: normalize(r.prs, maxPrs),
-          reviews: normalize(r.reviews, maxReviews),
-          activity: normalize(r.activityTouches, maxActivity),
-        };
-        const score = Math.round(
-          breakdown.tasks * WEIGHTS.tasks +
-            breakdown.commits * WEIGHTS.commits +
-            breakdown.prs * WEIGHTS.prs +
-            breakdown.reviews * WEIGHTS.reviews +
-            breakdown.activity * WEIGHTS.activity
-        );
+        const breakdown = buildBreakdown(r, maxes);
+        const score = computeScore(breakdown);
         return {
           userId: r.member.userId,
           name: r.member.user.name,

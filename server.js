@@ -25,13 +25,6 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || "*", credentials: true }));
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.json({
-    message: "Forgely backend is running",
-    status: "ok"
-  });
-});
-
 app.get("/api/health", async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -60,7 +53,7 @@ const PORT = process.env.PORT || 5000;
 const httpServer = http.createServer(app);
 initSocket(httpServer, process.env.CLIENT_URL);
 
-httpServer.listen(PORT, () => console.log(`Forgely API + WebSocket running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`ProjectForge API + WebSocket running on port ${PORT}`));
 
 const shutdown = async () => {
   await prisma.$disconnect();
