@@ -22,6 +22,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL || "*", credentials: true }));
+app.options("*", cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Pusher's client auth requests are form-encoded
 
