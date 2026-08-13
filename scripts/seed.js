@@ -5,7 +5,7 @@ import prisma from "../config/prisma.js";
 dotenv.config();
 
 const run = async () => {
-  const email = "demo@projectforge.dev";
+  const email = "demo@forgely.dev";
   let demoUser = await prisma.user.findUnique({ where: { email } });
   if (!demoUser) {
     demoUser = await prisma.user.create({
@@ -13,14 +13,14 @@ const run = async () => {
         name: "Demo User",
         email,
         password: await bcrypt.hash("demo1234", 10),
-        bio: "Exploring ProjectForge",
+        bio: "Exploring Forgely",
         skills: ["React", "Node.js"],
       },
     });
     console.log("Created demo user:", email, "/ demo1234");
   }
 
-  const adminEmail = "admin@projectforge.dev";
+  const adminEmail = "admin@forgely.dev";
   const adminExists = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!adminExists) {
     await prisma.user.create({

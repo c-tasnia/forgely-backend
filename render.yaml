@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: projectforge-backend
+    name: forgely-backend
     runtime: docker
     plan: free
     healthCheckPath: /api/health

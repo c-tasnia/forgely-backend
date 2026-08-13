@@ -36,7 +36,7 @@ export const uploadFile = async (req, res, next) => {
     }
 
     const result = await uploadBuffer(req.file.buffer, {
-      folder: `projectforge/${project.id}`,
+      folder: `forgely/${project.id}`,
       resource_type: "auto",
       public_id: req.file.originalname.replace(/\.[^/.]+$/, "").slice(0, 80),
     });

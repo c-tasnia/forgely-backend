@@ -1,4 +1,4 @@
-# ProjectForge — Backend
+# Forgely — Backend
 
 Node/Express API. Auth, projects, tasks/Kanban, invites, admin, reports, GitHub activity,
 contribution scoring, real-time chat, notifications, file uploads. Runs on Vercel as a serverless
@@ -21,7 +21,7 @@ Express · Prisma ORM · PostgreSQL (Neon) · JWT auth · bcrypt · Cloudinary �
    the four `PUSHER_*` vars, and the optional Cloudinary/GitHub vars above.
 6. `npm install` (runs `prisma generate` automatically)
 7. `npx prisma migrate dev --name init` — creates the tables on Neon
-8. `npm run seed` — creates `demo@projectforge.dev` / `demo1234` and `admin@projectforge.dev` / `admin1234`
+8. `npm run seed` — creates `demo@forgely.dev` / `demo1234` and `admin@forgely.dev` / `admin1234`
 9. `npm run dev` — runs the local dev server via `server.js` (plain `app.listen`, nothing
    Vercel-specific needed for local development)
 
