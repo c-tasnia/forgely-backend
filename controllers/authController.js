@@ -63,7 +63,7 @@ export const getMe = async (req, res) => {
 
 export const updateMe = async (req, res, next) => {
   try {
-    const allowed = ["name", "bio", "skills", "profilePicture", "githubUsername"];
+    const allowed = ["name", "bio", "skills", "profilePicture"];
     const data = {};
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) data[field] = req.body[field];

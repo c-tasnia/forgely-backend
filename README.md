@@ -17,13 +17,18 @@ Express · Prisma ORM · PostgreSQL (Neon) · JWT auth · bcrypt · Cloudinary �
    cloud name, API key, and API secret from the dashboard.
 4. (Optional) Generate a GitHub personal access token at https://github.com/settings/tokens
    (classic, no scopes needed for public repos) for the GitHub activity + contribution features.
-5. `cp .env.example .env` and fill in `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `CLIENT_URL`,
-   the four `PUSHER_*` vars, and the optional Cloudinary/GitHub vars above.
-6. `npm install` (runs `prisma generate` automatically)
-7. `npx prisma migrate dev --name init` — creates the tables on Neon
-8. `npm run seed` — creates `demo@forgely.dev` / `demo1234` and `admin@forgely.dev` / `admin1234`
-9. `npm run dev` — runs the local dev server via `server.js` (plain `app.listen`, nothing
-   Vercel-specific needed for local development)
+5. (Optional) Create a GitHub OAuth App at https://github.com/settings/developers → New OAuth App,
+   for the "Connect your GitHub account" button on the Profile page (this verifies each user's
+   real GitHub identity, separate from the server-wide token above). Set its Authorization
+   callback URL to `{SERVER_URL}/api/auth/github/callback` — matching whatever `SERVER_URL` you
+   put in `.env` (e.g. `http://localhost:5000` locally, your deployed backend URL in production).
+6. `cp .env.example .env` and fill in `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `CLIENT_URL`,
+   `SERVER_URL`, the four `PUSHER_*` vars, and the optional Cloudinary/GitHub vars above.
+7. `npm install` (runs `prisma generate` automatically)
+8. `npx prisma migrate dev --name init` — creates the tables on Neon
+9. `npm run seed` — creates `demo@forgely.dev` / `demo1234` and `admin@forgely.dev` / `admin1234`
+10. `npm run dev` — runs the local dev server via `server.js` (plain `app.listen`, nothing
+    Vercel-specific needed for local development)
 
 ## Deploying to Vercel
 This repo is structured for it: `app.js` holds the Express app with no `listen()` call,
@@ -33,12 +38,18 @@ that one function while preserving the original path.
 1. Push this backend to its own GitHub repo.
 2. On vercel.com, New Project → import the repo. Vercel auto-detects `vercel.json`.
 3. Add the env vars from your `.env` (`DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `CLIENT_URL`,
-   `PUSHER_*`, and the optional `GITHUB_TOKEN`/`CLOUDINARY_*` vars) in Project Settings →
-   Environment Variables.
+   `SERVER_URL` — set this to your deployed backend's own Vercel URL, `PUSHER_*`, and the optional
+   `GITHUB_TOKEN`/`GITHUB_OAUTH_*`/`CLOUDINARY_*` vars) in Project Settings → Environment Variables.
 4. Deploy. Test `https://your-backend.vercel.app/api/health` — should return
    `{"status":"ok","db":"connected"}`.
 5. Run migrations once against production: point a local `.env` at the same `DATABASE_URL`/
    `DIRECT_URL` you set on Vercel and run `npx prisma migrate deploy` from your machine.
+
+**GitHub OAuth after deploying:** you won't know your backend's real Vercel URL until after the
+first deploy, so `SERVER_URL` and the GitHub OAuth App's callback URL are a two-step process —
+deploy once with placeholder values (OAuth connect just won't work yet), then once you have the
+real URL, update `SERVER_URL` in Vercel's env vars, update the callback URL on the GitHub OAuth
+App itself (github.com/settings/developers → your app), and redeploy.
 
 ### Also fine: Railway / Render / Fly.io
 The `Dockerfile`, `render.yaml`, and `Procfile` in this repo still work if you'd rather run this
@@ -51,7 +62,7 @@ Set `VITE_API_URL` in the frontend's Vercel project to wherever you deploy *this
 matching the values you used here.
 
 ## API surface
-- `/api/auth` — register, login, me
+- `/api/auth` — register, login, me, GitHub OAuth connect/callback/disconnect
 - `/api/projects` — CRUD + invites
 - `/api/tasks` — CRUD + `/move` for Kanban drag-and-drop
 - `/api/invites` — list/respond
