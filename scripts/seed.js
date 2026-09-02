@@ -20,18 +20,25 @@ const run = async () => {
     console.log("Created demo user:", email, "/ demo1234");
   }
 
-  const adminEmail = "admin@forgely.dev";
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@forgely.dev";
   const adminExists = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!adminExists) {
-    await prisma.user.create({
-      data: {
-        name: "Platform Admin",
-        email: adminEmail,
-        password: await bcrypt.hash("admin1234", 10),
-        role: "admin",
-      },
-    });
-    console.log("Created admin user:", adminEmail, "/ admin1234");
+    if (!process.env.ADMIN_PASSWORD) {
+      console.warn(
+        "Skipping admin user creation — set ADMIN_PASSWORD in .env to seed an admin account. " +
+          "(No hardcoded admin password ships in this script on purpose.)"
+      );
+    } else {
+      await prisma.user.create({
+        data: {
+          name: "Platform Admin",
+          email: adminEmail,
+          password: await bcrypt.hash(process.env.ADMIN_PASSWORD, 10),
+          role: "admin",
+        },
+      });
+      console.log("Created admin user:", adminEmail);
+    }
   }
 
   const existingProject = await prisma.project.findFirst({

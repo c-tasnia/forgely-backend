@@ -26,7 +26,10 @@ Express · Prisma ORM · PostgreSQL (Neon) · JWT auth · bcrypt · Cloudinary �
    `SERVER_URL`, the four `PUSHER_*` vars, and the optional Cloudinary/GitHub vars above.
 7. `npm install` (runs `prisma generate` automatically)
 8. `npx prisma migrate dev --name init` — creates the tables on Neon
-9. `npm run seed` — creates `demo@forgely.dev` / `demo1234` and `admin@forgely.dev` / `admin1234`
+9. `npm run seed` — creates `demo@forgely.dev` / `demo1234` (public, safe to share — that's the
+   "Try demo account" login). For the admin account, set `ADMIN_PASSWORD` in `.env` first — the
+   seed script deliberately has no hardcoded admin password, so it skips admin creation if that's
+   unset. After seeding once, you can blank `ADMIN_PASSWORD` back out.
 10. `npm run dev` — runs the local dev server via `server.js` (plain `app.listen`, nothing
     Vercel-specific needed for local development)
 
